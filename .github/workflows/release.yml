@@ -1,0 +1,81 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.6
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.3.0
+
+    - name: Build Docker Image for ${{ matrix.arch }}
+      run: |
+        docker build --platform linux/${{ matrix.arch }} -t milkv-host-tools:${{ matrix.arch }} .
+
+    - name: Run Docker Container and Extract Toolchain
+      run: |
+        container_id=$(docker create milkv-host-tools:${{ matrix.arch }}) && \
+        docker cp $container_id:/app/crosstool-ng/toolchain-riscv64-unknown-linux-musl.tar.xz toolchain-riscv64-unknown-linux-musl-${{ matrix.arch }}.tar.xz && \
+        docker rm $container_id
+
+    - name: Upload ARM artifact
+      if: matrix.arch == 'arm64'
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: riscv-toolchain-arm64
+        path: toolchain-riscv64-unknown-linux-musl-arm64.tar.xz
+
+    - name: Upload x86_64 artifact
+      if: matrix.arch == 'amd64'
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: riscv-toolchain-x86_64
+        path: toolchain-riscv64-unknown-linux-musl-amd64.tar.xz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.6
+
+    - name: Download ARM artifact
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: riscv-toolchain-arm64
+        path: ./artifacts
+
+    - name: Download x86_64 artifact
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: riscv-toolchain-x86_64
+        path: ./artifacts
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1.14.0
+      with:
+        artifacts: |
+          ./artifacts/toolchain-riscv64-unknown-linux-musl-arm64.tar.xz
+          ./artifacts/toolchain-riscv64-unknown-linux-musl-amd64.tar.xz
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref }}
+        name: Release ${{ github.ref }}
+        body: |
+          This release contains the ZIP artifacts for both ARM and x86_64 architectures.

@@ -3,7 +3,6 @@ name: Build and Release
 on:
   push:
     branches:
-      - main
       - 'release/**'
   workflow_dispatch:
 
@@ -67,8 +66,8 @@ jobs:
       uses: ncipollo/release-action@v1.14.0
       with:
         artifacts: |
-          ./artifacts/riscv-toolchain-arm64.tar.xz
-          ./artifacts/riscv-toolchain-amd64.tar.xz
+          ./artifacts/toolchain-riscv64-unknown-linux-musl-arm64.tar.xz
+          ./artifacts/toolchain-riscv64-unknown-linux-musl-amd64.tar.xz
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}

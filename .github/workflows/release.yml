@@ -44,7 +44,7 @@ jobs:
         path: toolchain-riscv64-unknown-linux-musl-${{ matrix.arch }}.tar.xz
 
   release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/release/')
+    if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/release/')
     needs: build
     runs-on: ubuntu-latest
 

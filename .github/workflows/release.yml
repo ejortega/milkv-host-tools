@@ -1,0 +1,76 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.6
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.3.0
+
+    - name: Pull Docker Image for ${{ matrix.arch }}
+      run: |
+        docker pull --platform linux/${{ matrix.arch }} ejortega/milkv-host-tools:latest
+
+    - name: Run Docker Container and Extract Toolchain
+      run: |
+        container_id=$(docker create ejortega/milkv-host-tools:latest) && \
+        docker cp $container_id:/app/toolchain-riscv64-unknown-linux-musl.tar.xz toolchain-riscv64-unknown-linux-musl-${{ matrix.arch }}.tar.xz && \
+        docker rm $container_id
+
+    - name: Upload Artifact for ${{ matrix.arch }}
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: riscv-toolchain-${{ matrix.arch }}
+        path: toolchain-riscv64-unknown-linux-musl-${{ matrix.arch }}.tar.xz
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/release/')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.6
+
+    - name: Download Arm Artifacts
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: riscv-toolchain-arm64
+        path: ./artifacts
+
+    - name: Download Arm Artifacts
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: riscv-toolchain-amd64
+        path: ./artifacts
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1.14.0
+      with:
+        artifacts: |
+          ./artifacts/riscv-toolchain-arm64.tar.xz
+          ./artifacts/riscv-toolchain-amd64.tar.xz
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          This release contains the toolchain tarballs for both ARM64 and AMD64 architectures.

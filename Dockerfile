@@ -37,3 +37,14 @@ RUN wget https://github.com/milkv-duo/duo-buildroot-sdk/archive/refs/tags/Duo-V1
 COPY .config /app/crosstool-ng/.config
 
 RUN ./ct-ng build
+
+FROM ubuntu:22.04 as cacher
+ARG ARCHIVE=toolchain-riscv64-unknown-linux-musl.tar.xz
+
+WORKDIR /app
+
+RUN useradd -u 1000 -m -d /home/user -s /bin/bash user
+
+USER user
+
+COPY --from=builder /app/crosstool-ng/${ARCHIVE} ${ARCHIVE}

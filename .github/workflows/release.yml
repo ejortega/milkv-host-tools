@@ -72,6 +72,6 @@ jobs:
           ./artifacts/toolchain-riscv64-unknown-linux-musl-amd64.tar.xz
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
+        name: ${{ github.ref_name }}
         body: |
           This release contains the toolchain tarballs for both ARM64 and AMD64 architectures.

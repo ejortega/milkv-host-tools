@@ -9,6 +9,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -48,20 +52,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4.1.6
 
-    - name: Download Artifacts
-      uses: actions/download-artifact@v2
+    - name: Download Arm Artifacts
+      uses: actions/download-artifact@v4.1.7
       with:
-        name: |
-          riscv-toolchain-arm64
-          riscv-toolchain-amd64
+        name: riscv-toolchain-arm64
+        path: ./artifacts
+
+    - name: Download Arm Artifacts
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: riscv-toolchain-amd64
+        path: ./artifacts
 
     - name: Create Release
       uses: ncipollo/release-action@v1.14.0
       with:
         artifacts: |
-          ./riscv-toolchain-arm64.tar.xz
-          ./riscv-toolchain-amd64.tar.xz
-        token: ${{ secrets.GITHUB_TOKEN }}
+          ./artifacts/riscv-toolchain-arm64.tar.xz
+          ./artifacts/riscv-toolchain-amd64.tar.xz
         tag: ${{ github.ref }}
         name: Release ${{ github.ref }}
         body: |

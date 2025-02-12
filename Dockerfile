@@ -39,7 +39,7 @@ COPY .config /app/crosstool-ng/.config
 RUN ./ct-ng build
 
 FROM ubuntu:22.04 as cacher
-ARG ARCHIVE=toolchain-riscv64-unknown-linux-musl.tar.xz
+ARG ARCHIVE=riscv64-unknown-linux-musl.tar.xz
 
 WORKDIR /app
 

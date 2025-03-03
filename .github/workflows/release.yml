@@ -38,7 +38,7 @@ jobs:
         docker rm $container_id
 
     - name: Upload Artifact for ${{ matrix.arch }}
-      uses: actions/upload-artifact@v4.6.0
+      uses: actions/upload-artifact@v4.6.1
       with:
         name: riscv-toolchain-${{ matrix.arch }}
         path: riscv64-unknown-linux-musl-${{ matrix.arch }}.tar.xz

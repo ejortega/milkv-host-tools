@@ -65,7 +65,7 @@ jobs:
         path: ./artifacts
 
     - name: Create Release
-      uses: ncipollo/release-action@v1.15.0
+      uses: ncipollo/release-action@v1.16.0
       with:
         artifacts: |
           ./artifacts/riscv64-unknown-linux-musl-arm64.tar.xz

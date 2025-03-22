@@ -73,5 +73,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref_name }}
         name: ${{ github.ref_name }}
+        allowUpdates: true
+        replacesArtifacts: true
         body: |
           This release contains the toolchain tarballs for both ARM64 and AMD64 architectures.

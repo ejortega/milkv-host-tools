@@ -1,4 +1,7 @@
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.04 AS builder
+ARG CROSSTOOL_VER=crosstool-ng-1.27.0
+ARG DUO_BUILDROOT_VER=2.0.0
+ARG MUSL_VER=1.2.4
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive \
@@ -20,25 +23,27 @@ USER user
 
 WORKDIR /app
 
-RUN git clone https://github.com/crosstool-ng/crosstool-ng.git \
+RUN wget https://github.com/crosstool-ng/crosstool-ng/releases/download/${CROSSTOOL_VER}/${CROSSTOOL_VER}.tar.xz \
+    && tar xvf ${CROSSTOOL_VER}.tar.xz \
+    && mv ${CROSSTOOL_VER} crosstool-ng \
     && cd crosstool-ng \
-    && git checkout crosstool-ng-1.26.0 \
     && ./bootstrap \
     && ./configure --enable-local \
     && make
 
 WORKDIR /app/crosstool-ng
 
-RUN wget https://github.com/milkv-duo/duo-buildroot-sdk/archive/refs/tags/Duo-V1.1.1.tar.gz \
-    && tar -xf Duo-V1.1.1.tar.gz \
-    && rm Duo-V1.1.1.tar.gz \
-    && mv duo-buildroot-sdk-Duo-V1.1.1 duo-buildroot-sdk
-
 COPY .config /app/crosstool-ng/.config
 
-RUN ./ct-ng build
+RUN wget https://github.com/milkv-duo/duo-buildroot-sdk-v2/archive/refs/tags/v${DUO_BUILDROOT_VER}.tar.gz \
+    && tar -xf v${DUO_BUILDROOT_VER}.tar.gz \
+    && rm v${DUO_BUILDROOT_VER}.tar.gz \
+    && mkdir -p patches/musl/${MUSL_VER} \
+    && cp duo-buildroot-sdk-v2-${DUO_BUILDROOT_VER}/buildroot-2024.02/package/musl/*.patch patches/musl/${MUSL_VER}/ \
+    && ./ct-ng build \
+    && rm -rf duo-buildroot-sdk-v2-${DUO_BUILDROOT_VER}
 
-FROM ubuntu:22.04 as cacher
+FROM ubuntu:22.04 AS cacher
 ARG ARCHIVE=riscv64-unknown-linux-musl.tar.xz
 
 WORKDIR /app
